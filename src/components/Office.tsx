@@ -1,7 +1,8 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { DATA } from '../lib/config';
-import { AVATARS, DOOR_CLOSED, DOOR_HINGE, DOOR_OPEN, ENTITIES_HTML, LAMPS_SVG, SCENE_STATIC, SPRITES } from '../lib/generated/scene';
+import { SCENE } from '../lib/scene';
+import { char, sprite } from '../lib/look';
 import { IDS, SH, SW, computeView, initSim, realWeek, snapAll, stepAgent } from '../lib/sim';
 import { useOfficeData } from '../lib/useOfficeData';
 
@@ -75,7 +76,7 @@ export default function Office() {
   const v = view.views;
   const cur = openId ? v[openId] : null;
   const curEvents = openId ? data.events.filter((e) => e.agent_id === openId).slice(0, 4) : [];
-  const doorEnd = view.doorOpen ? DOOR_OPEN : DOOR_CLOSED;
+  const doorEnd = view.doorOpen ? SCENE.doorOpen : SCENE.doorClosed;
 
   return (
     <div className="shell" style={{ height: '100vh', boxSizing: 'border-box', display: 'flex', overflow: 'hidden', background: '#0C1624', color: '#E8EEF7', fontFamily: "'IBM Plex Sans', system-ui, sans-serif" }}>
@@ -93,7 +94,7 @@ export default function Office() {
                 <button key={id} onClick={() => setOpenId(id)} aria-pressed={a.pressed}
                   style={{ textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12, padding: '8px 12px 8px 8px', borderRadius: 12, border: `1px ${a.cBs} ${a.cBorder}`, background: a.cBg, minHeight: 64, boxSizing: 'border-box', width: '100%', color: 'inherit', font: 'inherit' }}>
                   <span style={{ flex: '0 0 44px', height: 54, borderRadius: 10, background: a.tint, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', overflow: 'hidden' }}>
-                    <svg viewBox="-16 -52 32 56" width="40" height="54" aria-hidden="true"><g opacity={a.avOp} dangerouslySetInnerHTML={{ __html: AVATARS[id] }} /></svg>
+                    <svg viewBox="-16 -52 32 56" width="40" height="54" aria-hidden="true"><g opacity={a.avOp} dangerouslySetInnerHTML={{ __html: char(id, false) }} /></svg>
                   </span>
                   <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
                     <span style={{ fontSize: 16, fontWeight: 600 }}>{a.name}</span>
@@ -117,11 +118,11 @@ export default function Office() {
             <div style={{ position: 'absolute', inset: 0 }}>
               <StaticScene />
               <svg viewBox={`0 0 ${SW} ${SH}`} style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', zIndex: 1, pointerEvents: 'none' }} aria-hidden="true">
-                <line x1={DOOR_HINGE[0]} y1={DOOR_HINGE[1]} x2={doorEnd[0]} y2={doorEnd[1]} stroke="#6B4A2E" strokeWidth="5" strokeLinecap="round" />
+                <line x1={SCENE.doorHinge[0]} y1={SCENE.doorHinge[1]} x2={doorEnd[0]} y2={doorEnd[1]} stroke="#6B4A2E" strokeWidth="5" strokeLinecap="round" />
               </svg>
               {IDS.map((id: string) => {
                 const a = v[id];
-                const svg = SPRITES[id].replace(/__(\w+)__/g, (_m: string, k: string) => ({ ring: a.ring, ghostOp: a.ghostOp, mugOp: a.mugOp } as any)[k]);
+                const svg = sprite(id).replace(/__(\w+)__/g, (_m: string, k: string) => ({ ring: a.ring, ghostOp: a.ghostOp, mugOp: a.mugOp } as any)[k]);
                 return (
                   <div key={id} style={{ position: 'absolute', left: a.left, top: a.top, zIndex: a.z, width: 0, height: 0, opacity: a.op, transition: 'left 0.25s linear, top 0.25s linear, opacity 0.6s', pointerEvents: 'none' }}>
                     <button onClick={() => setOpenId(id)} aria-label={`Ver ficha de ${a.name}`} className={a.cls}
@@ -142,7 +143,7 @@ export default function Office() {
               <svg viewBox={`0 0 ${SW} ${SH}`} style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', zIndex: 9000, pointerEvents: 'none' }} aria-hidden="true">
                 <rect width={SW} height={SH} fill="#0A1440" opacity={view.nightOp} />
                 <rect width={SW} height={SH} fill="#FF9A3C" opacity={view.duskOp} />
-                <g opacity={view.lampOp} dangerouslySetInnerHTML={{ __html: LAMPS_SVG }} />
+                <g opacity={view.lampOp} dangerouslySetInnerHTML={{ __html: SCENE.lampsSvg }} />
               </svg>
             </div>
           </div>
@@ -204,10 +205,10 @@ export default function Office() {
 }
 
 function StaticScene() {
-  const html = useMemo(() => ENTITIES_HTML, []);
+  const html = SCENE.entitiesHtml;
   return (
     <>
-      <svg viewBox={`0 0 ${SW} ${SH}`} style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', zIndex: 1 }} role="img" aria-label="Plano isométrico de la oficina" dangerouslySetInnerHTML={{ __html: SCENE_STATIC }} />
+      <svg viewBox={`0 0 ${SW} ${SH}`} style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', zIndex: 1 }} role="img" aria-label="Plano isométrico de la oficina" dangerouslySetInnerHTML={{ __html: SCENE.staticSvg }} />
       <div style={{ position: 'absolute', inset: 0 }} dangerouslySetInnerHTML={{ __html: html }} />
     </>
   );
